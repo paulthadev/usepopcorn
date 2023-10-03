@@ -56,18 +56,39 @@ export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const query = "iron";
+  const query = "fkvol";
 
   useEffect(function () {
     async function fetchMovies() {
-      setIsLoading(true);
-      const res = await fetch(
-        `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`
-      );
-      const data = await res.json();
-      setMovies(data.Search);
-      setIsLoading(false);
+      try {
+        /* Set a Loading State */
+        setIsLoading(true);
+
+        /* Fetch an API */
+        const res = await fetch(
+          `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+        );
+
+        /* If failed to Fetch, throw an Error */
+        if (!res.ok) throw new Error("Failed to fetch, Please Try Again");
+
+        /* Set result into data, when Fetched */
+        const data = await res.json();
+        console.log(data);
+
+        /* If Results not found, throw an Error */
+        if (data.Response === "False") throw new Error("Movie Not Found!");
+
+        /* Input search results into setMovies */
+        setMovies(data.Search);
+      } catch (err) {
+        /* Set the error message into a State */
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     fetchMovies();
@@ -82,13 +103,11 @@ export default function App() {
 
       <Main>
         <Box>
-          {isLoading ? (
-            <div className="spinner-container">
-              <div className="loading-spinner"></div>
-            </div>
-          ) : (
-            <MovieList movies={movies} />
-          )}
+          {/* {isLoading ? <Loader /> : <MovieList movies={movies} />} */}
+          {isLoading && <Loader />}
+          {!isLoading && !error && <MovieList movies={movies} />}
+
+          {error && <ErrorMessage message={error} />}
         </Box>
 
         <Box>
@@ -97,6 +116,25 @@ export default function App() {
         </Box>
       </Main>
     </>
+  );
+}
+
+// Loader
+function Loader() {
+  return (
+    <div className="spinner-container">
+      <div className="loading-spinner"></div>
+    </div>
+  );
+}
+
+// error message
+function ErrorMessage({ message }) {
+  return (
+    <div className="error">
+      <span>⛔</span>
+      {message}
+    </div>
   );
 }
 
