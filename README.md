@@ -1,6 +1,6 @@
 # UsePopcorn Movie App
 
-This is a movie / series searching web App which displays all the details you are looking for including: .\
+This is a movie / series searching web App which displays all the details you are looking for including:
 
 -  Movie Title
 -  Poster Image
