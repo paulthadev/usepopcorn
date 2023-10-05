@@ -300,6 +300,14 @@ body {
   gap: 2.4rem;
 }
 
+.rated {
+  text-align: center;
+  color: var(--color-primary-light);
+}
+.rated > span {
+  color: yellow;
+}
+
 .btn-add {
   background-color: var(--color-primary);
   color: var(--color-text);
