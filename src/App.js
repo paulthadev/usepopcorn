@@ -53,7 +53,7 @@ export default function App() {
           /* If API failed to fetch, throw an Error */
           if (!res.ok) throw new Error("Failed to fetch, Please Try Again");
 
-          /* Set result into data, when Fetched */
+          /* Set result into data, when Fetched*/
           const data = await res.json();
 
           /* If Results not found, throw an Error */
