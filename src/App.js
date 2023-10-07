@@ -33,14 +33,21 @@ export default function App() {
 
   useEffect(
     function () {
+      /* Cleaning Data Fetching*/
+      const controller = new AbortController();
+
       async function fetchMovies() {
         try {
           /* Set a Loading State */
           setIsLoading(true);
 
+          /*reset error*/
+          setError("");
+
           /* Fetch an API */
           const res = await fetch(
-            `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+            `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal }
           );
 
           /* If API failed to fetch, throw an Error */
@@ -54,14 +61,17 @@ export default function App() {
 
           /* Input search results into setMovies */
           setMovies(data.Search);
-        } catch (err) {
-          /* Set the error message into a State */
-          setError(err.message);
-        } finally {
-          setIsLoading(false);
 
           /*reset error*/
           setError("");
+        } catch (err) {
+          /* Set the error message into a State */
+          console.log(err);
+          if (err.message !== "The user aborted a request.") {
+            setError(err.message);
+          }
+        } finally {
+          setIsLoading(false);
         }
       }
 
@@ -73,6 +83,10 @@ export default function App() {
       }
 
       fetchMovies();
+
+      return function () {
+        controller.abort();
+      };
     },
     [query]
   );
@@ -277,6 +291,7 @@ function MovieDetails({ watched, selectedId, onCloseMovie, onAddWatched }) {
     (movie) => movie.imdbID === selectedId
   )?.userRating;
 
+  /* destructuring fetched API results*/
   const {
     Title: title,
     Poster: poster,
@@ -308,6 +323,32 @@ function MovieDetails({ watched, selectedId, onCloseMovie, onAddWatched }) {
     onCloseMovie();
   }
 
+  /* 
+  keypress Event: 
+  Escape Key to close from movie
+  */
+  useEffect(
+    function () {
+      function callback(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+          console.log("CLOSING");
+        }
+      }
+
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [onCloseMovie]
+  );
+
+  /* 
+  Effect to fetch Movie from the API
+  using the imdbID
+  */
   useEffect(
     function () {
       async function getMovieDetails() {
@@ -317,7 +358,10 @@ function MovieDetails({ watched, selectedId, onCloseMovie, onAddWatched }) {
           `https://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
         );
 
+        /* Set result into data, when Fetched */
         const data = await res.json();
+
+        /* data, into setMovie */
         setMovie(data);
         setIsLoading(false);
       }
@@ -327,11 +371,18 @@ function MovieDetails({ watched, selectedId, onCloseMovie, onAddWatched }) {
     [selectedId]
   );
 
+  /* 
+  Effect to change Page TItle 
+  to current movie selected
+  */
+
   useEffect(
     function () {
+      /* Change Page TItle to current movie selected*/
       if (!title) return;
       document.title = `Movie | ${title}`;
 
+      /* cleanup function*/
       return function () {
         document.title = "usePopcorn";
       };
