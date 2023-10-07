@@ -66,7 +66,6 @@ export default function App() {
           setError("");
         } catch (err) {
           /* Set the error message into a State */
-          console.log(err);
           if (err.message !== "The user aborted a request.") {
             setError(err.message);
           }
@@ -82,6 +81,7 @@ export default function App() {
         return;
       }
 
+      handleCloseMovie();
       fetchMovies();
 
       return function () {
@@ -332,7 +332,6 @@ function MovieDetails({ watched, selectedId, onCloseMovie, onAddWatched }) {
       function callback(e) {
         if (e.code === "Escape") {
           onCloseMovie();
-          console.log("CLOSING");
         }
       }
 
