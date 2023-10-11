@@ -189,18 +189,30 @@ function Logo() {
   );
 }
 
-// search
-
+// Search Query
 function Search({ query, setQuery }) {
-  const handleSearch = (e) => {
-    setQuery(e.target.value);
-  };
-
   const inputEl = useRef(null);
 
-  useEffect(function () {
-    inputEl.current.focus();
-  }, []);
+  useEffect(
+    function () {
+      function callback(e) {
+        if (document.activeElement === inputEl.current) {
+          return;
+        }
+
+        if (e.code === "Enter") {
+          inputEl.current.focus();
+          setQuery("");
+          console.log("LLL");
+        }
+      }
+      document.addEventListener("keydown", callback);
+
+      // Cleaning up
+      return document.removeEventListener("keydown", callback);
+    },
+    [setQuery]
+  );
 
   return (
     <input
@@ -209,7 +221,7 @@ function Search({ query, setQuery }) {
       type="text"
       placeholder="Search movies..."
       value={query}
-      onChange={handleSearch}
+      onChange={(e) => setQuery(e.target.value)}
       ref={inputEl}
     />
   );
