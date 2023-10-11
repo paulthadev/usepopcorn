@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import "./spinner.css";
 import StarRating from "./StarRating";
 
@@ -10,15 +10,10 @@ const KEY = "53751975";
 export default function App() {
   const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
+  const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-
-  // const [watched, setWatched] = useState([]);
-  const [watched, setWatched] = useState(function () {
-    const storedValue = localStorage.getItem("watched");
-    return JSON.parse(storedValue);
-  });
 
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (selectedId === id ? null : id));
@@ -36,15 +31,6 @@ export default function App() {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
-  /* Effect: Store movies into localstorage once it's added to List */
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
-
-  /* Effect:  Load movie from the API to the UI */
   useEffect(
     function () {
       /* Cleaning Data Fetching*/
@@ -196,12 +182,6 @@ function Search({ query, setQuery }) {
     setQuery(e.target.value);
   };
 
-  const inputEl = useRef(null);
-
-  useEffect(function () {
-    inputEl.current.focus();
-  }, []);
-
   return (
     <input
       id="search"
@@ -210,7 +190,6 @@ function Search({ query, setQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={handleSearch}
-      ref={inputEl}
     />
   );
 }
