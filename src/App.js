@@ -1,25 +1,29 @@
 import { useEffect, useState, useRef } from "react";
 import "./spinner.css";
 import StarRating from "./StarRating";
+import { useMovies } from "./useMovies";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
 const KEY = "53751975";
 
+/* 
+==================================================================
+APP Component
+==================================================================
+*/
 export default function App() {
   const [query, setQuery] = useState("");
-  const [movies, setMovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-
-  // const [watched, setWatched] = useState([]);
+  const { movies, isLoading, error } = useMovies(query);
   const [watched, setWatched] = useState(function () {
     const storedValue = localStorage.getItem("watched");
     return JSON.parse(storedValue);
   });
+  // const [watched, setWatched] = useState([]);
 
+  // Functions
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (selectedId === id ? null : id));
   }
@@ -36,73 +40,13 @@ export default function App() {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
-  /* Effect: Store movies into localstorage once it's added to List */
+  // Effect:
+  // Store movies into localstorage once it's added to List
   useEffect(
     function () {
       localStorage.setItem("watched", JSON.stringify(watched));
     },
     [watched]
-  );
-
-  /* Effect:  Load movie from the API to the UI */
-  useEffect(
-    function () {
-      /* Cleaning Data Fetching*/
-      const controller = new AbortController();
-
-      async function fetchMovies() {
-        try {
-          /* Set a Loading State */
-          setIsLoading(true);
-
-          /*reset error*/
-          setError("");
-
-          /* Fetch an API */
-          const res = await fetch(
-            `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-            { signal: controller.signal }
-          );
-
-          /* If API failed to fetch, throw an Error */
-          if (!res.ok) throw new Error("Failed to fetch, Please Try Again");
-
-          /* Set result into data, when Fetched*/
-          const data = await res.json();
-
-          /* If Results not found, throw an Error */
-          if (data.Response === "False") throw new Error("Movie Not Found!");
-
-          /* Input search results into setMovies */
-          setMovies(data.Search);
-
-          /*reset error*/
-          setError("");
-        } catch (err) {
-          /* Set the error message into a State */
-          if (err.message !== "The user aborted a request.") {
-            setError(err.message);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      /* If search query is empty*/
-      if (!query.length) {
-        setMovies([]);
-        setError("");
-        return;
-      }
-
-      handleCloseMovie();
-      fetchMovies();
-
-      return function () {
-        controller.abort();
-      };
-    },
-    [query]
   );
 
   return (
@@ -145,7 +89,7 @@ export default function App() {
     </>
   );
 }
-// Loader
+// Preloader
 function Loader() {
   return (
     <div className="spinner-container">
@@ -154,7 +98,7 @@ function Loader() {
   );
 }
 
-// error message
+// Error message
 function ErrorMessage({ message }) {
   return (
     <div className="error">
@@ -245,7 +189,7 @@ const Main = ({ children }) => {
   return <main className="main">{children}</main>;
 };
 
-// Box
+// BOX section
 function Box({ children }) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -260,32 +204,7 @@ function Box({ children }) {
   );
 }
 
-/*
-// watched--box
-function WatchedBox() {
-  const [watched, setWatched] = useState(tempWatchedData);
-  const [isOpen2, setIsOpen2] = useState(true);
-
-  return (
-    <div className="box">
-      <button
-        className="btn-toggle"
-        onClick={() => setIsOpen2((open) => !open)}
-      >
-        {isOpen2 ? "-" : "+"}
-      </button>
-      {isOpen2 && (
-        <>
-          <WatchedSummary watched={watched} />
-          <WatchedMovieList watched={watched} />
-        </>
-      )}
-    </div>
-    );
-}
-*/
-
-// movie--list
+// Movie list
 function MovieList({ movies, OnSelectMovie }) {
   return (
     <ul className="list list-movies">
@@ -296,7 +215,7 @@ function MovieList({ movies, OnSelectMovie }) {
   );
 }
 
-// movie
+// Movies
 function Movie({ movie, OnSelectMovie }) {
   return (
     <li onClick={() => OnSelectMovie(movie.imdbID)}>
@@ -311,19 +230,20 @@ function Movie({ movie, OnSelectMovie }) {
     </li>
   );
 }
+
 // Movie Details
 function MovieDetails({ watched, selectedId, onCloseMovie, onAddWatched }) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [userRating, setUserRating] = useState("");
 
-  const countRef = useRef(0);
+  // Count user rating decision
+  // Effect: To count rating decision
 
+  const countRef = useRef(0);
   useEffect(
     function () {
       if (userRating) countRef.current += 1;
-
-      console.log(countRef);
     },
     [userRating]
   );
@@ -334,7 +254,8 @@ function MovieDetails({ watched, selectedId, onCloseMovie, onAddWatched }) {
     (movie) => movie.imdbID === selectedId
   )?.userRating;
 
-  /* destructuring fetched API results*/
+  // Destructure fetched API result
+  // Add destructured result to WatchedMovies
   const {
     Title: title,
     Poster: poster,
@@ -363,14 +284,10 @@ function MovieDetails({ watched, selectedId, onCloseMovie, onAddWatched }) {
     };
 
     onAddWatched(newWatchedMovie);
-
     onCloseMovie();
   }
 
-  /* 
-  keypress Event: 
-  Escape Key to close from movie
-  */
+  // keypress Event:  Escape Key to close from movie
   useEffect(
     function () {
       function callback(e) {
